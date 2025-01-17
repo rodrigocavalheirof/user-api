@@ -12,19 +12,25 @@ class UserController extends Controller
     // Criar usuário
     public function store(Request $request)
     {
-        $request->validate([
+         // Validação dos dados
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            // Criação do usuário
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => bcrypt($validatedData['password']),
+            ]);
 
-        return response()->json($user, 201);
+            return response()->json($user, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Internal Server Error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     // Listar todos os usuários
@@ -63,12 +69,5 @@ class UserController extends Controller
         return response()->json(null, 204);
     }
 }
-
-use App\Http\Controllers\UserController;
-
-Route::get('users', [UserController::class, 'index']);
-Route::post('users', [UserController::class, 'store']);
-Route::put('users/{id}', [UserController::class, 'update']);
-Route::delete('users/{id}', [UserController::class, 'destroy']);
 
 ?>
